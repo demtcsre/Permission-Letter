@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Create Permission</title>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.2/web3.min.js"></script>
+        <script src="../static/js/blockchain.js"></script>
+</head>
+<body>
+        <div class="createpermission">
+                <form method="POST" action="" autocomplete="off">
+                        <div class="container">
+                                <h4 class="title">Create Permission</h4>
+                                
+                                <div class="form-group">
+                                        <label for="type">Select Type</label>
+                                        <br>
+                                        <input type="radio" id="Sakit" name="type" value="Sakit">
+                                        <label for="Sakit">Sakit</label><br>
+                                        <input type="radio" id="Izin" name="type" value="Izin">
+                                        <label for="Izin">Izin</label><br>
+                                </div>
+                                <br>
+                                <div class="form-group">
+                                        <label for="surat">Surat</label>
+                                        <input type="file" name="surat" id="surat" placeholder="surat" accept="DOCTYPE/*">
+                                </div>
+                                <br>
+                                <div class="form-group">
+                                        <label>
+                                                Start date:
+                                                <input type="date" name="start" />
+                                        </label>
+                                        <br>
+                                        <label>
+                                                End date:
+                                                <input type="date" name="end" />
+                                        </label>
+                                </div>
+                                <br>
+                                <input type="submit" onclick="create_permission()" value="Create">
+                        </div>
+        
+        
+                </form>
+        </div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+</head>
+<body>
+    <div class="signup">
+        <form method="POST" action="/signup" enctype="multipart/form-data" autocomplete="off">
+            <div class="container">
+                <h4 class="title">Sign up</h4>
+                
+                {% with messages = get_flashed_messages() %}
+                  {% if messages %}
+                    <ul>
+                    {% for message in messages %}
+                      <li>{{ message }}</li>
+                    {% endfor %}
+                    </ul>
+                  {% endif %}
+                {% endwith %}
+                
+                <div class="form-group">
+                    <label for="NIS">NIS</label>
+                    <input type="text" name="NIS" id="NIS" placeholder="NIS" required>
+                </div>
+                <br>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" name="password" id="password" placeholder="Password" required>
+                </div>
+                <br>
+                <div class="form-group">
+                    <label for="signature">Signature (PNG only)</label>
+                    <input type="file" name="signature" id="signature" accept="image/png" required>
+                </div>
+                <br>
+                <input type="submit" value="Sign up">
+            </div>
+        </form>
+    </div>
+</body>
+</html>
