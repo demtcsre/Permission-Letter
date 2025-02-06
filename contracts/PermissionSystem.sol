@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 contract PermissionSystem {
@@ -6,39 +7,36 @@ contract PermissionSystem {
         string permissionType;
         uint256 startDate;
         uint256 endDate;
-        bytes32 barcode;
-        bool isValid;
     }
 
-    mapping(bytes32 => Permission) public permissions;
-    event PermissionCreated(bytes32 barcode, string studentID, uint256 startDate, uint256 endDate);
-    event Debug(string message, bytes32 barcode);
-    
-    function createPermission(string memory _studentID, string memory _permissionType, uint256 _startDate, uint256 _endDate) public returns (bytes32) {
+    mapping(string => Permission) public permissions;
+    event PermissionCreated(string studentID, uint256 startDate, uint256 endDate);
+
+    function createPermission(
+        string memory _studentID,
+        string memory _permissionType,
+        uint256 _startDate,
+        uint256 _endDate
+    ) public returns (string memory) {
         require(_endDate > block.timestamp, "End date must be in the future");
-        
-        bytes32 barcode = keccak256(abi.encodePacked(_studentID, _startDate, _endDate, block.timestamp));
-        
-        emit Debug("Generating barcode", barcode);
-        
-        Permission storage newPermission = permissions[barcode];
-        newPermission.studentID = _studentID;
-        newPermission.permissionType = _permissionType;
-        newPermission.startDate = _startDate;
-        newPermission.endDate = _endDate;
-        newPermission.barcode = barcode;
-        newPermission.isValid = true;
-        
-        emit Debug("Permission stored", barcode);
-        emit PermissionCreated(barcode, _studentID, _startDate, _endDate);
-        return barcode;
+
+        string memory permissionKey = string(abi.encodePacked(_studentID, "-", _startDate, "-", _endDate));
+
+        permissions[permissionKey] = Permission({
+            studentID: _studentID,
+            permissionType: _permissionType,
+            startDate: _startDate,
+            endDate: _endDate
+        });
+
+        emit PermissionCreated(_studentID, _startDate, _endDate);
+        return permissionKey;
     }
-    
-    function validatePermission(bytes32 _barcode) public view returns (bool) {
-        Permission memory perm = permissions[_barcode];
-        if (perm.isValid && block.timestamp <= perm.endDate) {
-            return true;
-        }
-        return false;
+
+    function getPermission(string memory _permissionKey) public view returns (
+        string memory, string memory, uint256, uint256
+    ) {
+        Permission memory perm = permissions[_permissionKey];
+        return (perm.studentID, perm.permissionType, perm.startDate, perm.endDate);
     }
 }
