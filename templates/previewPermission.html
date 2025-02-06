@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Permission - User</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permission Preview</title>
 </head>
 <body>
-        <div class="container">
-                <button>Download</button>
-                <embed src="https://mirza.staff.ugm.ac.id/termo/TERMODINAMIKA.pdf" width="500" height="375" type="application/pdf">
-        </div>
+    <div class="container">
+        <h4>Permission Document Preview</h4>
+        <button onclick="downloadPDF()">Download</button>
+        <br><br>
+        <embed src="{{ url_for('static', filename='pdfs/' + pdf_file) }}" width="600" height="500" type="application/pdf">
+    </div>
+    
+    <script>
+        function downloadPDF() {
+            window.location.href = "{{ url_for('download_permission', pdf_name=pdf_file) }}";
+        }
+    </script>
 </body>
 </html>

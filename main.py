@@ -1,47 +1,30 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from pyzbar.pyzbar import decode
 from web3 import Web3
+from datetime import datetime
+from PIL import Image
+from fpdf import FPDF
 
 import sqlite3
 import os
+import qrcode
+import pytz
 
 app = Flask(__name__)
 app.secret_key = "+&4FdE&5zmf#F*%"
 UPLOAD_FOLDER = 'static/signatures'
+pdf_folder = 'static/pdfs'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Connect to Ganache
 web3 = Web3(Web3.HTTPProvider("http://127.0.0.1:7545"))
-contract_address = "0x2637eb02F023F89B325697439557f98264B60b1F"
-contract_abi = [
+contract_address = "0x9aCd3eE25c1A82B31dC4956d824bC3D7Db19FeA2" # GANACHE -> CONTRACTS TAB -> ADDRESS (Selalu diperbarui setelah compiling contracts)
+contract_abi = [ # Selalu diperbarui setelah compiling contracts build/contracts/PermissionSystem.json
     {
       "anonymous": False,
       "inputs": [
-        {
-          "indexed": False,
-          "internalType": "string",
-          "name": "message",
-          "type": "string"
-        },
-        {
-          "indexed": False,
-          "internalType": "bytes32",
-          "name": "barcode",
-          "type": "bytes32"
-        }
-      ],
-      "name": "Debug",
-      "type": "event"
-    },
-    {
-      "anonymous": False,
-      "inputs": [
-        {
-          "indexed": False,
-          "internalType": "bytes32",
-          "name": "barcode",
-          "type": "bytes32"
-        },
         {
           "indexed": False,
           "internalType": "string",
@@ -67,9 +50,9 @@ contract_abi = [
     {
       "inputs": [
         {
-          "internalType": "bytes32",
+          "internalType": "string",
           "name": "",
-          "type": "bytes32"
+          "type": "string"
         }
       ],
       "name": "permissions",
@@ -93,20 +76,11 @@ contract_abi = [
           "internalType": "uint256",
           "name": "endDate",
           "type": "uint256"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "barcode",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bool",
-          "name": "isValid",
-          "type": "bool"
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": True
     },
     {
       "inputs": [
@@ -134,9 +108,9 @@ contract_abi = [
       "name": "createPermission",
       "outputs": [
         {
-          "internalType": "bytes32",
+          "internalType": "string",
           "name": "",
-          "type": "bytes32"
+          "type": "string"
         }
       ],
       "stateMutability": "nonpayable",
@@ -145,28 +119,44 @@ contract_abi = [
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "_barcode",
-          "type": "bytes32"
+          "internalType": "string",
+          "name": "_permissionKey",
+          "type": "string"
         }
       ],
-      "name": "validatePermission",
+      "name": "getPermission",
       "outputs": [
         {
-          "internalType": "bool",
+          "internalType": "string",
           "name": "",
-          "type": "bool"
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": True
     }
 ]
 contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 
 @app.route("/")
 def home():
-    return render_template("landing.html")
+    return render_template("index.html")
 
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
@@ -230,25 +220,104 @@ def signup():
 
 @app.route("/create_portal")
 def create_portal():
-    return render_template("createPermission.html")
+    current_date = datetime.today().strftime('%Y-%m-%d')
+    return render_template("createPermission.html", current_date=current_date)
 
 @app.route('/create_permission', methods=['POST'])
 def create_permission():
     studentID = request.form['studentID']
     permissionType = request.form['type']
-    startDate = int(request.form['startDate'].replace('-', ''))
-    endDate = int(request.form['endDate'].replace('-', ''))
+    startDate = int(datetime.strptime(request.form['startDate'], '%Y-%m-%d').timestamp()) + 25200 #UTC+7
+    endDate = int(datetime.strptime(request.form['endDate'], '%Y-%m-%d').timestamp()) + 25200 #UTC+7
     
     try:
         accounts = web3.eth.accounts
         tx_hash = contract.functions.createPermission(studentID, permissionType, startDate, endDate).transact({
             "from": accounts[0]
         })
-        flash('Permission created successfully! Transaction Hash: ' + tx_hash.hex())
+        
+        barcode_data = f"0x{tx_hash.hex()}"
+        
+        barcode_path = f"static/barcodes/{studentID}.png"
+        os.makedirs("static/barcodes", exist_ok=True)
+        qr = qrcode.make(barcode_data)
+        qr.save(barcode_path)
+        
+        pdf_path = generate_permission_pdf(studentID, permissionType, startDate, endDate, barcode_path)
+        
+        return redirect(url_for('preview_permission', pdf_name=os.path.basename(pdf_path)))
     except Exception as e:
         flash('Error creating permission: ' + str(e))
+        return redirect(url_for('home'))
+
+def generate_permission_pdf(studentID, permissionType, startDate, endDate, barcode_path):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, "Permission Letter", ln=True, align='C')
+    pdf.cell(200, 10, f"Student ID: {studentID}", ln=True)
+    pdf.cell(200, 10, f"Permission Type: {permissionType}", ln=True)
+    pdf.cell(200, 10, f"Start Date: {datetime.utcfromtimestamp(startDate).strftime('%Y-%m-%d')}", ln=True)
+    pdf.cell(200, 10, f"End Date: {datetime.utcfromtimestamp(endDate).strftime('%Y-%m-%d')}", ln=True)
+    pdf.image(barcode_path, x=10, y=pdf.get_y() + 10, w=50)
     
-    return redirect(url_for('home'))
+    pdf_path = f"{pdf_folder}/{studentID}.pdf"
+    pdf.output(pdf_path)
+
+    return pdf_path
+
+@app.route('/preview_permission/<pdf_name>')
+def preview_permission(pdf_name):
+    return render_template('previewPermission.html', pdf_file=pdf_name)
+
+@app.route('/download_permission/<pdf_name>')
+def download_permission(pdf_name):
+    pdf_path = os.path.join(pdf_folder, pdf_name)
+    return send_file(pdf_path, as_attachment=True)
+
+@app.route('/validate', methods=['GET'])
+def validate_page():
+    return render_template("validator.html")
+
+@app.route('/validate_barcode', methods=['POST'])
+def validate_barcode():
+    if 'barcode' not in request.files:
+      return jsonify({"message": "No file uploaded"}), 400
+
+    barcode_file = request.files['barcode']
+
+    try:
+        file_path = "static/temp_barcode.png"
+        barcode_file.save(file_path)
+
+        decoded_data = decode(Image.open(file_path))
+        if not decoded_data:
+          return jsonify({"message": "Invalid barcode"}), 400
+
+        barcode_data = decoded_data[0].data.decode("utf-8")
+        if not barcode_data.startswith("0x") or len(barcode_data) != 66:  # 66 characters for a tx_hash
+            return jsonify({"message": "Invalid"})
+
+        try:
+            tx = web3.eth.get_transaction(barcode_data)
+            func_obj, func_params = contract.decode_function_input(tx['input'])
+        except Exception:
+            return jsonify({"message": "Invalid"})
+
+        start_timestamp = func_params.get('_startDate', None)
+        end_timestamp = func_params.get('_endDate', None)
+
+        today_date = datetime.utcfromtimestamp(datetime.now().timestamp()+25200)
+        start_date = datetime.utcfromtimestamp(int(start_timestamp))
+        end_date = datetime.utcfromtimestamp(int(end_timestamp))
+
+        if start_date <= today_date <= end_date:
+          return jsonify({"message": "Valid"})
+        else:
+          return jsonify({"message": "Invalid"})
+          
+    except Exception as e:
+        return jsonify({"message": f"Error: {str(e)}"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

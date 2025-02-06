@@ -1,16 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Validator</title>
-
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.2/web3.min.js"></script>
-        <script src="../static/js/blockchain.js"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Validator</title>
 </head>
 <body>
-        <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QRCode">
-        <button onclick="validatePermission()">Scan</button>
+    <h3>Upload Barcode Image</h3>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" id="barcode" name="barcode" accept="image/*" required>
+        <button type="submit">Validate</button>
+    </form>
+    
+    <div id="result"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("upload-form").addEventListener("submit", async function (event) {
+                event.preventDefault();
+                let formData = new FormData();
+                formData.append("barcode", document.getElementById("barcode").files[0]);
+
+                let response = await fetch("/validate_barcode", {
+                    method: "POST",
+                    body: formData
+                });
+
+                let result = await response.json();
+                document.getElementById("result").innerText = result.message;
+            });
+        });
+    </script>
 </body>
 </html>
