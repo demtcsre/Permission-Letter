@@ -1,6 +1,6 @@
 Module Requirements:
 -) Install node.js
--) Download dan install aplikasi ganache melalui link berikut (https://archive.trufflesuite.com/ganache) atau npm install ganache (direkomendasikan untuk download  
+-) Download dan install aplikasi ganache melalui link berikut (https://archive.trufflesuite.com/ganache) atau npm install ganache (direkomendasikan untuk download melalui link yang dicantumkan)
 -) npm install -g truffle
 -) npm install web3
 
