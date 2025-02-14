@@ -1,62 +1,371 @@
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Permission</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.2/web3.min.js"></script>
-    <script src="../static/js/blockchain.js"></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Create Permission</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.2/web3.min.js"></script>
+	<script src="../static/js/blockchain.js"></script>
+	<style>
+		:root {
+			--font: "Inter", sans-serif;
+			--white: #fff;
+			--purple: #6d44b8;
+		}
+
+		body {
+			margin: 0;
+			padding: 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			min-height: 100vh;
+			font-family: 'Jost', sans-serif;
+			background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+		}
+
+		.createpermission {
+			color: white;
+			padding: 25px;
+			width: 350px;
+			height: 600px;
+			background: red;
+			overflow: hidden;
+			background: url("https://doc-08-2c-docs.googleusercontent.com/docs/securesc/68c90smiglihng9534mvqmq1946dmis5/fo0picsp1nhiucmc0l25s29respgpr4j/1631524275000/03522360960922298374/03522360960922298374/1Sx0jhdpEpnNIydS4rnN4kHSJtU1EyWka?e=view&authuser=0&nonce=gcrocepgbb17m&user=03522360960922298374&hash=tfhgbs86ka6divo3llbvp93mg4csvb38") no-repeat center/ cover;
+			border-radius: 10px;
+			box-shadow: 5px 20px 50px #000;
+		}
+
+		.title {
+			font-size: 1.5em;
+			justify-content: center;
+			display: flex;
+			margin: 50px;
+			font-weight: bold;
+			cursor: pointer;
+		}
+
+		input {
+			width: 60%;
+			height: 10px;
+			background: #e0dede;
+			justify-content: center;
+			display: flex;
+			margin: 20px auto;
+			padding: 12px;
+			border: none;
+			outline: none;
+			border-radius: 5px;
+		}
+
+		.box {
+			width: 105px;
+			height: 30px;
+			border-radius: 5px;
+			justify-content: center;
+			align-items: center;
+			display: flex;
+			padding: 5px;
+			background-color: var(--white);
+			transition: all 250ms ease;
+			will-change: transition;
+			display: inline-block;
+			text-align: center;
+			cursor: pointer;
+			position: relative;
+			font-family: var(--font);
+			font-weight: 900;
+
+			&:active {
+				transform: translateY(10px);
+			}
+
+			span {
+				transform: translate(0, 30px);
+				left: 0;
+				right: 0;
+				transition: all 300ms ease;
+				font-size: 1.5em;
+				user-select: none;
+				color: var(--purple);
+
+				&:before {
+					font-size: 1.2em;
+					font-family: FontAwesome;
+					display: block;
+					transform: translateY(-40px);
+					opacity: 0;
+					transition: all 300ms ease-in-out;
+					font-weight: normal;
+					color: white;
+				}
+			}
+		}
+
+		input[type="radio"] {
+			display: none;
+
+			&:checked {
+				+.box {
+					background-color: var(--purple);
+
+					span {
+						color: white;
+						transform: translateY(70px);
+
+						&:before {
+							transform: translateY(0px);
+							opacity: 1;
+						}
+					}
+				}
+			}
+		}
+
+		p {
+			color: var(--white);
+			font-family: var(--font);
+			font-weight: 400;
+
+			a {
+				text-decoration: underline;
+				font-weight: bold;
+				color: #fff;
+			}
+
+			span {
+				&:after {
+					content: "\f0e7";
+					font-family: FontAwesome;
+					color: yellow;
+				}
+			}
+		}
+
+		.form-group {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+
+		}
+
+		.drag-area {
+			margin: 20px auto;
+			padding: 10px;
+			border: 2px dashed #fff;
+			height: 75px;
+			width: 60%;
+			border-radius: 5px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-direction: column;
+		}
+
+		.drag-area.active {
+			border: 2px solid #fff;
+		}
+
+		.drag-area header {
+			font-size: 15px;
+			font-weight: 500;
+			color: #fff;
+		}
+
+		.drag-area button {
+			margin: 10px;
+			width: 100px;
+			height: 30px;
+			padding: 10px 10px;
+			font-size: 15px;
+			font-weight: 500;
+			border: none;
+			outline: none;
+			background: #fff;
+			color: #5256ad;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: all 0.5s;
+		}
+
+		.drag-area button:hover {
+			background: rgb(228, 220, 220);
+		}
+
+		.drag-area p {
+			font-size: 15px;
+			font-weight: 500;
+			color: #fff;
+			justify-content: center;
+		}
+
+		button {
+			width: 67%;
+			height: 40px;
+			margin: 10px auto;
+			justify-content: center;
+			display: block;
+			color: #fff;
+			background: #573b8a;
+			font-size: 1em;
+			font-weight: bold;
+			margin-top: 30px;
+			outline: none;
+			border: none;
+			border-radius: 5px;
+			transition: .2s ease-in;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background: #6d44b8;
+		}
+	</style>
 </head>
+
 <body>
-    <div class="createpermission">
-        <form method="POST" action="/create_permission" autocomplete="off">
-            <div class="container">
-                <h4 class="title">Create Permission</h4>
-                
-                {% with messages = get_flashed_messages() %}
-                  {% if messages %}
-                    <ul>
-                    {% for message in messages %}
-                      <li>{{ message }}</li>
-                    {% endfor %}
-                    </ul>
-                  {% endif %}
-                {% endwith %}
-                
-                <div class="form-group">
-                    <label for="studentID">NIS</label>
-                    <input type="text" name="studentID" id="studentID" placeholder="Enter your NIS" required>
-                </div>
-                <br>
-                <div class="form-group">
-                    <label for="type">Select Type</label>
-                    <br>
-                    <input type="radio" id="Sakit" name="type" value="Sakit">
-                    <label for="Sakit">Sakit</label><br>
-                    <input type="radio" id="Izin" name="type" value="Izin">
-                    <label for="Izin">Izin</label><br>
-                </div>
-                <br>
-                <div class="form-group">
-                    <label for="surat">Surat</label>
-                    <input type="file" name="surat" id="surat" accept="*DOCTYPE">
-                </div>
-                <br>
-                <div class="form-group">
-                    <label>
-                        Start date:
-                        <input type="date" name="startDate" required>
-                    </label>
-                    <br>
-                    <label>
-                        End date:
-                        <input type="date" name="endDate" id="endDate" required min="{{ current_date }}">
-                    </label>
-                </div>
-                <br>
-                <input type="submit" value="Create">
-            </div>
-        </form>
-    </div>
+	<div class="createpermission">
+		<form method="POST" action="/create_permission" autocomplete="off">
+			<div class="container">
+				<label class="title">Create Permission</label>
+
+				<!-- {% with messages = get_flashed_messages() %}
+				{% if messages %}
+				<ul>
+					{% for message in messages %}
+					<li>{{ message }}</li>
+					{% endfor %}
+				</ul>
+				{% endif %}
+				{% endwith %} -->
+
+				<div class="form-group">
+					<input type="text" name="studentID" id="studentID" placeholder="NIS" required>
+					<div >
+
+						<label>
+							<input type="radio" id="Sakit" name="type" value="Sakit"
+								checked>
+							<div class="Sakit box">
+								<span>Sakit</span>
+							</div>
+						</label>
+
+						<label>
+							<input type="radio" id="Izin" name="type" value="Izin">
+							<div class="Izin box">
+								<span>Izin</span>
+							</div>
+						</label>
+					</div>
+					<div class="drag-area" ondrop="upload_file(event)"
+						ondragover="return false">
+						<header>Drag & Drop to Upload File</header>
+						<button>Browse</button>
+						<input type="file" name="surat" id="surat" hidden
+							style="display: none;" accept="*DOCTYPE">
+					</div>
+					<div style="display:flex;">
+						<input style = "max-width: 88px; margin: 5px" type="text" name="startDate" placeholder="From" onfocus="(this.type='date')" onblur="(this.type='text')" required>
+						<input style = "max-width: 88px; margin: 5px" type="text" name="endDate" placeholder="To" onfocus="(this.type='date')" onblur="(this.type='text')" required min="{{ current_date }}">
+					</div>
+				</div>
+				<button>Create</button>
+			</div>
+		</form>
+	</div>
+	<script>
+		const dropArea = document.querySelector(".drag-area"),
+			dragText = dropArea.querySelector("header"),
+			button = dropArea.querySelector("button"),
+			input = dropArea.querySelector("input");
+		let file;
+		var fileobj;
+
+
+		button.onclick = () => {
+			input.click();
+			file_browse();
+		}
+
+		input.addEventListener("change", function () {
+			file = this.files[0];
+			dropArea.classList.add("active");
+			showFile();
+		});
+
+		dropArea.addEventListener("dragover", (event) => {
+			event.preventDefault();
+			dropArea.classList.add("active");
+			dragText.textContent = "Release to Upload File";
+		});
+
+		dropArea.addEventListener("dragleave", () => {
+			dropArea.classList.remove("active");
+			dragText.textContent = "Drag & Drop to Upload File";
+		});
+
+		dropArea.addEventListener("drop", (event) => {
+			event.preventDefault();
+			file = event.dataTransfer.files[0];
+			showFile();
+		});
+
+		function showFile() {
+			let validExtensions = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
+
+			if (validExtensions.includes(file.type)) {
+				let fileReader = new FileReader();
+				fileReader.onload = () => {
+					dropArea.innerHTML = "<p>File uploaded successfully!</p>";
+					dropArea.classList.add("upload-success");
+				}
+				fileReader.readAsDataURL(file);
+			} else {
+				alert("Invalid file type! Please upload a document file (PDF, DOCX, TXT). ");
+				dropArea.classList.remove("active");
+				dragText.textContent = "Drag & Drop to Upload File";
+			}
+		}
+
+
+
+		function upload_file(e) {
+			e.preventDefault();
+			fileobj = e.dataTransfer.files[0];
+			js_file_upload(fileobj);
+		}
+
+		function file_browse() {
+			document.getElementById('file').onchange = function () {
+				fileobj = document.getElementById('file').files[0];
+				js_file_upload(fileobj);
+			};
+		}
+
+
+		function js_file_upload(file_obj) {
+			if (file_obj != undefined) {
+				var form_data = new FormData();
+				form_data.append('file', file_obj);
+				var xhttp = new XMLHttpRequest();
+				xhttp.open("POST", "upload.php", true);
+				xhttp.onload = function (event) {
+
+					if (xhttp.status == 200) {
+						console.log("Uploaded!");
+					} else {
+						alert(xhttp.status);
+					}
+				}
+
+				xhttp.send(form_data);
+			}
+		}
+	</script>
 </body>
+
 </html>
