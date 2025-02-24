@@ -1,35 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Validator</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Barcode Validator</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			min-height: 100vh;
+			font-family: 'Jost', sans-serif;
+			background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+		}
+
+		.container {
+			color: white;
+			padding: 25px;
+			width: 350px;
+			min-height: 300px;
+			background: red;
+			overflow: hidden;
+			background: url("https://doc-08-2c-docs.googleusercontent.com/docs/securesc/68c90smiglihng9534mvqmq1946dmis5/fo0picsp1nhiucmc0l25s29respgpr4j/1631524275000/03522360960922298374/03522360960922298374/1Sx0jhdpEpnNIydS4rnN4kHSJtU1EyWka?e=view&authuser=0&nonce=gcrocepgbb17m&user=03522360960922298374&hash=tfhgbs86ka6divo3llbvp93mg4csvb38") no-repeat center/ cover;
+			border-radius: 10px;
+			box-shadow: 5px 20px 50px #000;
+		}
+
+		label {
+			font-size: 2em;
+			justify-content: center;
+			display: flex;
+			font-weight: bold;
+			cursor: pointer;
+			margin-bottom: 20px;
+		}
+
+		.drag-area {
+			margin: 0 auto;
+			padding: 10px;
+			border: 2px dashed #fff;
+			height: 75px;
+			width: 200px;
+			border-radius: 5px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-direction: column;
+		}
+
+		.drag-area.active {
+			border: 2px solid #fff;
+		}
+
+		.drag-area header {
+			font-size: 15px;
+			font-weight: 500;
+			color: #fff;
+		}
+
+		.drag-area button {
+			margin: 10px;
+			width: 100px;
+			height: 30px;
+			padding: 10px 10px;
+			font-size: 15px;
+			font-weight: 500;
+			border: none;
+			outline: none;
+			background: #fff;
+			color: #5256ad;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: all 0.5s;
+		}
+
+		.drag-area button:hover {
+			background: rgb(228, 220, 220);
+		}
+
+		.drag-area img {
+			height: 100%;
+			width: 100%;
+			object-fit: cover;
+			border-radius: 5px;
+		}
+
+		button {
+			width: 60%;
+			height: 40px;
+			margin: 10px auto;
+			justify-content: center;
+			display: block;
+			color: #fff;
+			background: #573b8a;
+			font-size: 1em;
+			font-weight: bold;
+			margin-top: 30px;
+			outline: none;
+			border: none;
+			border-radius: 5px;
+			transition: .2s ease-in;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background: #6d44b8;
+		}
+
+		.check {
+			border-radius: 5px;
+			width: 220px;
+			height: 30px;
+			text-align: left;
+			display: flex;
+			align-items: center;
+			padding: 10px;
+			background-color: #2B3246;
+			cursor: pointer;
+			box-shadow: 9px 9px 18px #262c3e,
+				-9px -9px 18px #30384e;
+			color: #0ad406;
+			margin: 20px;
+		}
+
+		.check:hover {
+			background-color: rgba(147, 209, 117, 0.50);
+			transition: 0.5s;
+		}
+
+		.color {
+			animation: color 2s linear infinite;
+		}
+
+		.danger {
+			border-radius: 5px;
+			width: 220px;
+			height: 30px;
+			text-align: left;
+			display: flex;
+			align-items: center;
+			padding: 10px;
+			background-color: #2B3246;
+			cursor: pointer;
+			box-shadow: 9px 9px 18px #262c3e,
+				-9px -9px 18px #30384e;
+			color: rgb(255, 10, 1);
+			margin: 20px;
+		}
+
+		.danger:hover {
+			background-color: rgba(255, 10, 1, 0.33);
+			transition: 0.5s;
+		}
+
+
+		.shine {
+			animation: shine 2s linear infinite;
+		}
+
+		@keyframes color {
+			50% {
+				color: #2B3246;
+			}
+
+			100% {
+				color: #0ad406;
+			}
+		}
+
+		@keyframes shine {
+			0% {
+				color: #2B3246;
+			}
+
+			50% {
+				text-shadow:
+					0 0 5px #fff,
+					0 0 10px #fff,
+					0 0 40px red,
+					0 0 60px red,
+					0 0 80px red;
+			}
+		}
+	</style>
 </head>
+
 <body>
-    <h3>Upload Barcode Image</h3>
-    <form id="upload-form" enctype="multipart/form-data">
-        <input type="file" id="barcode" name="barcode" accept="image/*" required>
-        <button type="submit">Validate</button>
-    </form>
-    
-    <div id="result"></div>
+	<div class="container">
+		<label>Upload Barcode Image</label>
+		<form id="upload-form" enctype="multipart/form-data">
+			<div class="drag-area" ondrop="upload_file(event)" ondragover="return false">
+				<header>Drag & Drop to Upload File</header>
+				<button>Browse</button>
+				<input type="file" name="file" id="file" hidden style="display: none;">
+			</div>
+			<button type="submit">Validate</button>
+		</form>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.getElementById("upload-form").addEventListener("submit", async function (event) {
-                event.preventDefault();
-                let formData = new FormData();
-                formData.append("barcode", document.getElementById("barcode").files[0]);
+		<div id="result"></div>
+	</div>
 
-                let response = await fetch("/validate_barcode", {
-                    method: "POST",
-                    body: formData
-                });
+	<script>
+		const dropArea = document.querySelector(".drag-area"),
+			dragText = dropArea.querySelector("header"),
+			button = dropArea.querySelector("button"),
+			input = dropArea.querySelector("input");
+		let file;
+		var fileobj;
 
-                let result = await response.json();
-                document.getElementById("result").innerText = result.message;
-            });
-        });
-    </script>
+
+		button.onclick = () => {
+			input.click();
+			file_browse();
+		}
+
+		input.addEventListener("change", function () {
+			file = this.files[0];
+			dropArea.classList.add("active");
+			showFile();
+		});
+
+		dropArea.addEventListener("dragover", (event) => {
+			event.preventDefault();
+			dropArea.classList.add("active");
+			dragText.textContent = "Release to Upload File";
+		});
+
+		dropArea.addEventListener("dragleave", () => {
+			dropArea.classList.remove("active");
+			dragText.textContent = "Drag & Drop to Upload File";
+		});
+
+		dropArea.addEventListener("drop", (event) => {
+			event.preventDefault();
+			file = event.dataTransfer.files[0];
+			showFile();
+		});
+
+		function showFile() {
+			let fileType = file.type;
+			let validExtensions = ["image/jpeg", "image/jpg", "image/png"];
+			if (validExtensions.includes(fileType)) {
+				let fileReader = new FileReader();
+				fileReader.onload = () => {
+					let fileURL = fileReader.result;
+					let imgTag = `<img src="${fileURL}" alt="">`;
+					dropArea.innerHTML = imgTag;
+				}
+				fileReader.readAsDataURL(file);
+			} else {
+				alert("This is not an Image File!");
+				dropArea.classList.remove("active");
+				dragText.textContent = "Drag & Drop to Upload File";
+			}
+		}
+
+
+		function upload_file(e) {
+			e.preventDefault();
+			fileobj = e.dataTransfer.files[0];
+			js_file_upload(fileobj);
+		}
+
+		function file_browse() {
+			document.getElementById('file').onchange = function () {
+				fileobj = document.getElementById('file').files[0];
+				js_file_upload(fileobj);
+			};
+		}
+
+
+		function js_file_upload(file_obj) {
+			if (file_obj != undefined) {
+				var form_data = new FormData();
+				form_data.append('file', file_obj);
+				var xhttp = new XMLHttpRequest();
+				xhttp.open("POST", "upload.php", true);
+				xhttp.onload = function (event) {
+
+					if (xhttp.status == 200) {
+						console.log("Uploaded!");
+					} else {
+						alert(xhttp.status);
+					}
+				}
+
+				xhttp.send(form_data);
+			}
+		}
+
+		document.addEventListener("DOMContentLoaded", function () {
+			document.getElementById("upload-form").addEventListener("submit", async function (event) {
+				event.preventDefault();
+				let formData = new FormData();
+				formData.append("barcode", document.getElementById("file").files[0]);
+
+				let response = await fetch("/validate_barcode", {
+					method: "POST",
+					body: formData
+				});
+
+				let result = await response.json();
+				let resultDiv = document.getElementById("result");
+				resultDiv.innerHTML = "";
+
+				if (1) {
+					resultDiv.innerHTML = `<div class="check">
+					<i class="far fa-check-circle"></i> &nbsp; &nbsp;
+					<span>Nailed It!</span>
+				</div>`;
+				} else {
+					resultDiv.innerHTML = `<div class="danger">
+					<i class="far fa-times-circle"></i> &nbsp; &nbsp;
+					<span>Wrong Answer</span>
+				</div>`;
+				}
+			});
+		});
+	</script>
 </body>
+
 </html>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from pyzbar.pyzbar import decode
@@ -158,64 +158,64 @@ contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 def home():
     return render_template("index.html")
 
-@app.route('/signin', methods=['GET', 'POST'])
-def signin():
+@app.route('/auth', methods=['GET', 'POST'])
+def auth():
     if request.method == 'POST':
-        nis = request.form['username']
-        password = request.form['password']
+        action = request.form.get('action')
         
-        conn = sqlite3.connect('students.db')
-        c = conn.cursor()
-        c.execute("SELECT password FROM students WHERE student_id=?", (nis,))
-        user = c.fetchone()
-        conn.close()
-        
-        if user and check_password_hash(user[0], password):
-            flash('Login successful!')
-            return redirect(url_for('create_portal'))
-        else:
-            flash('Invalid NIS or password. Please try again.')
-            return redirect(url_for('signin'))
-    
-    return render_template('signIn.html')
+        if action == 'signup':
+            nis = request.form['NIS']
+            password = generate_password_hash(request.form['password'])
+            signature = request.files['signature']
 
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if request.method == 'POST':
-        nis = request.form['NIS']
-        password = generate_password_hash(request.form['password'])
-        signature = request.files['signature']
+            conn = sqlite3.connect('students.db')
+            c = conn.cursor()
+            c.execute("SELECT signature FROM students WHERE student_id=?", (nis,))
+            existing_record = c.fetchone()
 
-        conn = sqlite3.connect('students.db')
-        c = conn.cursor()
-        c.execute("SELECT signature FROM students WHERE student_id=?", (nis,))
-        existing_record = c.fetchone()
+            if existing_record and existing_record[0]:
+                flash('Account has already been signed up before.')
+                return redirect(url_for('auth'))
 
-        if existing_record and existing_record[0]:
-            flash('Account has already been signed up before.')
-            return redirect(url_for('signup'))
-        
-        if signature and signature.filename.endswith('.png'):
-            signature_path = os.path.join(app.config['UPLOAD_FOLDER'], nis + '.png')
-            signature.save(signature_path)
-        else:
-            flash('Only PNG images are allowed.')
-            return redirect(url_for('signup'))
-        
-        try:
-            c.execute("UPDATE students SET password=?, signature=? WHERE student_id=?", (password, signature_path, nis))
-            if c.rowcount == 0:
-                flash('NIS not found in database. Please check your NIS.')
-                return redirect(url_for('signup'))
-            conn.commit()
+            if signature and signature.filename.endswith('.png'):
+                signature_path = os.path.join(app.config['UPLOAD_FOLDER'], nis + '.png')
+                signature.save(signature_path)
+            else:
+                flash('Only PNG images are allowed.')
+                return redirect(url_for('auth'))
+
+            try:
+                c.execute("UPDATE students SET password=?, signature=? WHERE student_id=?", 
+                          (password, signature_path, nis))
+                if c.rowcount == 0:
+                    flash('NIS not found in database. Please check your NIS.')
+                    return redirect(url_for('auth'))
+                conn.commit()
+                conn.close()
+                flash('Registration successful!')
+                return redirect(url_for('auth'))
+            except sqlite3.Error as e:
+                flash('Database error: ' + str(e))
+                return redirect(url_for('auth'))
+
+        elif action == 'signin':
+            nis = request.form['username']
+            password = request.form['password']
+
+            conn = sqlite3.connect('students.db')
+            c = conn.cursor()
+            c.execute("SELECT password FROM students WHERE student_id=?", (nis,))
+            user = c.fetchone()
             conn.close()
-            flash('Registration successful!')
-            return redirect(url_for('home'))
-        except sqlite3.Error as e:
-            flash('Database error: ' + str(e))
-            return redirect(url_for('signup'))
-    
-    return render_template('signUp.html')
+
+            if user and check_password_hash(user[0], password):
+                flash('Login successful!')
+                return redirect(url_for('create_portal'))
+            else:
+                flash('Invalid NIS or password. Please try again.')
+                return redirect(url_for('auth'))
+
+    return render_template('signIn_signUp.html')
 
 
 @app.route("/create_portal")
@@ -249,22 +249,74 @@ def create_permission():
     except Exception as e:
         flash('Error creating permission: ' + str(e))
         return redirect(url_for('home'))
+        
 
-def generate_permission_pdf(studentID, permissionType, startDate, endDate, barcode_path):
+def generate_permission_pdf(studentID, permissionType, startDate, endDate, barcode_path, file_paths):
+    conn = sqlite3.connect('students.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT name, class, signature FROM students WHERE student_id = ?", (studentID))
+    result = cursor.fetchone()
+    
+    if result:
+        name, student_class, signature = result
+    else:
+        name, student_class, signature = None, None
+
     pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, "Permission Letter", ln=True, align='C')
-    pdf.cell(200, 10, f"Student ID: {studentID}", ln=True)
-    pdf.cell(200, 10, f"Permission Type: {permissionType}", ln=True)
-    pdf.cell(200, 10, f"Start Date: {datetime.utcfromtimestamp(startDate).strftime('%Y-%m-%d')}", ln=True)
-    pdf.cell(200, 10, f"End Date: {datetime.utcfromtimestamp(endDate).strftime('%Y-%m-%d')}", ln=True)
-    pdf.image(barcode_path, x=10, y=pdf.get_y() + 10, w=50)
-    
-    pdf_path = f"{pdf_folder}/{studentID}.pdf"
-    pdf.output(pdf_path)
 
-    return pdf_path
+        
+    pdf.set_xy(10, 10)
+    pdf.cell(0, 10, "SURAT IZIN SISWA", ln=True, align='C')
+    pdf.ln(10)
+    
+    pdf.cell(0, 10, "Dengan hormat,", ln=True, align='L')
+    pdf.ln(1)
+    pdf.multi_cell(0, 10, "Dengan ini saya orang tua/wali murid dari:")
+    pdf.ln(1)
+    
+    pdf.cell(35, 10, "               Nama", ln=False, align='L')
+    pdf.cell(0, 10, f": {name}", ln=True, align='L')
+    
+    pdf.cell(35, 10, "               Kelas", ln=False, align='L')
+    pdf.cell(0, 10, f": {student_class}", ln=True, align='L')
+    
+    pdf.cell(35, 10, "               NIS", ln=False, align='L')
+    pdf.cell(0, 10, f": {studentID}", ln=True, align='L')
+    pdf.ln(1)
+    
+    pdf.multi_cell(0, 10, f"Memberitahukan bahwasannya anak saya tidak bisa mengikuti kegiatan belajar mengajar "
+                         f"pada tanggal {datetime.utcfromtimestamp(startDate).strftime('%d-%m-%Y')} hingga {datetime.utcfromtimestamp(endDate).strftime('%d-%m-%Y')} dikarenakan {permissionType.upper()} dan telah saya "
+                         f"lampirkan surat pendukung pada lampiran.")
+    pdf.ln(1)
+    
+    pdf.multi_cell(0, 10, "Demikianlah surat ini saya tulis dengan sebenar-benarnya. Atas perhatiannya saya "
+                         "ucapkan terima kasih.")
+    pdf.ln(1)
+    
+    pdf.cell(0, 10, f"{signature}", ln=True, align='R')
+    pdf.ln(1)
+    
+    pdf.cell(0, 10, "Hormat saya,", ln=True, align='R')
+    pdf.ln(20)
+    
+    pdf.cell(0, 10, f"Wali Murid {name}", ln=True, align='R')
+    pdf.ln(1)
+    
+    pdf.image(barcode_path)
+    pdf.ln(10)
+    
+    pdf.cell(0, 10, "LAMPIRAN", ln=True, align='C')
+    
+    for file_path in file_paths:
+        if os.path.exists(file_path):
+            pdf.add_page()
+            pdf.image(file_path, x=10, y=10, w=190)
+    
+    pdf.output("surat_izin_siswa.pdf")
 
 @app.route('/preview_permission/<pdf_name>')
 def preview_permission(pdf_name):

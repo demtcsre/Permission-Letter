@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Log In & Sign Up</title>
+	<link rel="stylesheet" type="text/css" href="slide navbar style.css">
+	<link href="https://fonts.googleapis.com/css2?family=Jost:wght@500&display=swap" rel="stylesheet">
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			min-height: 100vh;
+			font-family: 'Jost', sans-serif;
+			background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+		}
+
+		.main {
+			width: 350px;
+			height: 600px;
+			background: red;
+			overflow: hidden;
+			background: url("https://doc-08-2c-docs.googleusercontent.com/docs/securesc/68c90smiglihng9534mvqmq1946dmis5/fo0picsp1nhiucmc0l25s29respgpr4j/1631524275000/03522360960922298374/03522360960922298374/1Sx0jhdpEpnNIydS4rnN4kHSJtU1EyWka?e=view&authuser=0&nonce=gcrocepgbb17m&user=03522360960922298374&hash=tfhgbs86ka6divo3llbvp93mg4csvb38") no-repeat center/ cover;
+			border-radius: 10px;
+			box-shadow: 5px 20px 50px #000;
+		}
+
+		#chk {
+			display: none;
+		}
+
+		.signup {
+			position: relative;
+			width: 100%;
+			height: 100%;
+		}
+
+		label {
+			color: #fff;
+			font-size: 2.3em;
+			justify-content: center;
+			display: flex;
+			margin: 50px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: .5s ease-in-out;
+		}
+
+		input {
+			width: 60%;
+			height: 10px;
+			background: #e0dede;
+			justify-content: center;
+			display: flex;
+			margin: 20px auto;
+			padding: 12px;
+			border: none;
+			outline: none;
+			border-radius: 5px;
+		}
+
+		button {
+			width: 60%;
+			height: 40px;
+			margin: 10px auto;
+			justify-content: center;
+			display: block;
+			color: #fff;
+			background: #573b8a;
+			font-size: 1em;
+			font-weight: bold;
+			margin-top: 30px;
+			outline: none;
+			border: none;
+			border-radius: 5px;
+			transition: .2s ease-in;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background: #6d44b8;
+		}
+
+		.login {
+			height: 550px;
+			background: #eee;
+			border-radius: 60% / 10%;
+			transform: translateY(-180px);
+			transition: .8s ease-in-out;
+		}
+
+		.login label {
+			color: #573b8a;
+			transform: scale(.6);
+		}
+
+		#chk:checked~.login {
+			transform: translateY(-600px);
+		}
+
+		#chk:checked~.login label {
+			transform: scale(1);
+		}
+
+		#chk:checked~.signup label {
+			transform: scale(.6);
+		}
+
+		.drag-area {
+			margin: 0 auto;
+			padding: 10px;
+			border: 2px dashed #fff;
+			height: 75px;
+			width: 200px;
+			border-radius: 5px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-direction: column;
+		}
+
+		.drag-area.active {
+			border: 2px solid #fff;
+		}
+
+		.drag-area header {
+			font-size: 15px;
+			font-weight: 500;
+			color: #fff;
+		}
+
+		.drag-area button {
+			margin: 10px;
+			width: 100px;
+			height: 30px;
+			padding: 10px 10px;
+			font-size: 15px;
+			font-weight: 500;
+			border: none;
+			outline: none;
+			background: #fff;
+			color: #5256ad;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: all 0.5s;
+		}
+
+		.drag-area button:hover {
+			background: rgb(228, 220, 220);
+		}
+
+		.drag-area img {
+			height: 100%;
+			width: 100%;
+			object-fit: cover;
+			border-radius: 5px;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="main">
+		<input type="checkbox" id="chk" aria-hidden="true">
+
+		<div class="signup">
+			<form method="POST" enctype="multipart/form-data">
+				<label for="chk" aria-hidden="true">Sign up</label>
+				<input type="text" name="NIS" placeholder="NIS" required="">
+				<input type="password" name="password" placeholder="Password" required="">
+
+				<div class="drag-area" ondrop="upload_file(event)" ondragover="return false">
+					<header>Drag & Drop to Upload File</header>
+					<button>Browse</button>
+					<input type="file" name="signature" id="file" hidden style="display: none;">
+				</div>
+				<button type="submit" name="action" value="signup">Sign up</button>
+			</form>
+		</div>
+
+		<div class="login">
+			<form>
+				<label for="chk" aria-hidden="true">Login</label>
+				<input type="text" name="username" placeholder="NIS" required="">
+				<input type="password" name="password" placeholder="Password" required="">
+				<button type="submit" name="action" value="signin">Login</button>
+			</form>
+		</div>
+	</div>
+	<script>
+		const dropArea = document.querySelector(".drag-area"),
+			dragText = dropArea.querySelector("header"),
+			button = dropArea.querySelector("button"),
+			input = dropArea.querySelector("input");
+		let file;
+		var fileobj;
+
+
+		button.onclick = () => {
+			input.click();
+			file_browse();
+		}
+
+		input.addEventListener("change", function () {
+			file = this.files[0];
+			dropArea.classList.add("active");
+			showFile();
+		});
+
+		dropArea.addEventListener("dragover", (event) => {
+			event.preventDefault();
+			dropArea.classList.add("active");
+			dragText.textContent = "Release to Upload File";
+		});
+
+		dropArea.addEventListener("dragleave", () => {
+			dropArea.classList.remove("active");
+			dragText.textContent = "Drag & Drop to Upload File";
+		});
+
+		dropArea.addEventListener("drop", (event) => {
+			event.preventDefault(); 
+			file = event.dataTransfer.files[0];
+			showFile();
+		});
+
+		function showFile() {
+			let fileType = file.type; 
+			let validExtensions = ["image/jpeg", "image/jpg", "image/png"];
+			if (validExtensions.includes(fileType)) { 
+				let fileReader = new FileReader();
+				fileReader.onload = () => {
+					let fileURL = fileReader.result;
+					let imgTag = `<img src="${fileURL}" alt="">`; 
+					dropArea.innerHTML = imgTag;
+				}
+				fileReader.readAsDataURL(file);
+			} else {
+				alert("This is not an Image File!");
+				dropArea.classList.remove("active");
+				dragText.textContent = "Drag & Drop to Upload File";
+			}
+		}
+
+
+		function upload_file(e) {
+			e.preventDefault();
+			fileobj = e.dataTransfer.files[0];
+			js_file_upload(fileobj);
+		}
+
+		function file_browse() {
+			document.getElementById('file').onchange = function () {
+				fileobj = document.getElementById('file').files[0];
+				js_file_upload(fileobj);
+			};
+		}
+
+
+		function js_file_upload(file_obj) {
+			if (file_obj != undefined) {
+				var form_data = new FormData();
+				form_data.append('file', file_obj);
+				var xhttp = new XMLHttpRequest();
+				xhttp.open("POST", "upload.php", true);
+				xhttp.onload = function (event) {
+
+					if (xhttp.status == 200) {
+						console.log("Uploaded!");
+					} else {
+						alert(xhttp.status);
+					}
+				}
+
+				xhttp.send(form_data);
+			}
+		}
+	</script>
+</body>
+
+</html>
